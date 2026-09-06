@@ -741,7 +741,124 @@ def main() -> None:
         '''),
     ])
 
-    print(f"Generated 9 notebooks in {NOTEBOOKS}")
+    write_notebook("09_end_to_end_mvp.ipynb", [
+        md('''
+        # 09 — MVP de bout en bout
+
+        Ce notebook utilise le package de production du dépôt. Il montre le chemin complet entre un corpus, l'index hybride et une réponse citée.
+
+        Le corpus ci-dessous est fictif pour que le notebook reste immédiatement exécutable. Pour des documents réels, utiliser le catalogue officiel et valider chaque version avant indexation.
+        '''),
+        code('''
+        import sys
+        from pathlib import Path
+
+        PROJECT_ROOT = Path.cwd()
+        if PROJECT_ROOT.name == "notebooks":
+            PROJECT_ROOT = PROJECT_ROOT.parent
+        sys.path.insert(0, str(PROJECT_ROOT / "src"))
+        '''),
+        code('''
+        from morocco_legal_rag.chunking import chunk_page
+        from morocco_legal_rag.generation import ExtractiveGenerator
+        from morocco_legal_rag.retrieval import HybridRetriever
+        from morocco_legal_rag.service import LegalRAGService
+
+        pages = [
+            ("DEMO-A", "Document pédagogique A", 1, "Le délai pédagogique de traitement est de dix jours ouvrables."),
+            ("DEMO-B", "Document pédagogique B", 2, "Une correction nécessite une demande écrite et un justificatif rectifié."),
+            ("DEMO-C", "Document pédagogique C", 4, "Le dépôt pédagogique est disponible au guichet de démonstration."),
+        ]
+        chunks = [
+            chunk
+            for document_id, title, page, text in pages
+            for chunk in chunk_page(
+                document_id=document_id,
+                title=title,
+                page=page,
+                text=text,
+                language="fr",
+                size=40,
+                overlap=5,
+            )
+        ]
+        len(chunks)
+        '''),
+        code('''
+        retriever = HybridRetriever()
+        retriever.fit(chunks)
+        service = LegalRAGService(retriever, ExtractiveGenerator())
+
+        response = service.ask("Quel est le délai de traitement ?", language="fr", top_k=2)
+        print(response.answer)
+        response.citations
+        '''),
+        md('''
+        ## Passer au modèle multilingue
+
+        Après `pip install -e ".[ml]"`, remplacer le baseline par :
+
+        ```python
+        from morocco_legal_rag.retrieval import SentenceTransformerEncoder
+        retriever = HybridRetriever(encoder=SentenceTransformerEncoder())
+        ```
+
+        Le reste du pipeline demeure identique, ce qui rend les expériences comparables.
+        '''),
+    ])
+
+    write_notebook("10_retrieval_benchmark.ipynb", [
+        md('''
+        # 10 — Benchmark du retrieval
+
+        Ce notebook mesure le retrieval indépendamment du LLM. Les questions de démonstration doivent être remplacées par des questions relues et rattachées à des pages officielles.
+        '''),
+        code('''
+        import sys
+        from pathlib import Path
+
+        PROJECT_ROOT = Path.cwd()
+        if PROJECT_ROOT.name == "notebooks":
+            PROJECT_ROOT = PROJECT_ROOT.parent
+        sys.path.insert(0, str(PROJECT_ROOT / "src"))
+        '''),
+        code('''
+        from morocco_legal_rag.chunking import chunk_page
+        from morocco_legal_rag.evaluation import EvaluationQuestion, evaluate_retriever
+        from morocco_legal_rag.retrieval import HybridRetriever
+
+        examples = {
+            "A": "Le délai pédagogique de traitement est de dix jours ouvrables.",
+            "B": "Une correction nécessite une demande écrite et un justificatif rectifié.",
+            "C": "Le dépôt pédagogique est disponible au guichet de démonstration.",
+        }
+        chunks = [
+            chunk_page(document_id=key, title=f"Démo {key}", page=1, text=text, size=40, overlap=5)[0]
+            for key, text in examples.items()
+        ]
+        retriever = HybridRetriever()
+        retriever.fit(chunks)
+        questions = [
+            EvaluationQuestion("q1", "délai de traitement", frozenset({"A"})),
+            EvaluationQuestion("q2", "corriger avec une demande écrite", frozenset({"B"})),
+            EvaluationQuestion("q3", "dépôt au guichet", frozenset({"C"})),
+        ]
+        evaluate_retriever(retriever, questions, k=2)
+        '''),
+        md('''
+        ## Expériences à enregistrer
+
+        - BM25 seul, dense seul et hybride ;
+        - plusieurs tailles de chunks et overlaps ;
+        - hashing baseline contre multilingual-e5 ;
+        - avec et sans filtres de métadonnées ;
+        - avec et sans reranker.
+
+        Ne retenir une amélioration que si le benchmark progresse sans dégrader les questions sans réponse.
+        '''),
+    ])
+
+    print(f"Generated 11 notebooks in {NOTEBOOKS}")
 
 
 if __name__ == "__main__":

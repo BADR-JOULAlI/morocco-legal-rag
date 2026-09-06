@@ -2,9 +2,14 @@ __pycache__/
 .venv/
 .env
 .env.*
+!.env.example
 data/raw/
 data/processed/
 data/index/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+.coverage
+htmlcov/
+dist/
+*.egg-info/

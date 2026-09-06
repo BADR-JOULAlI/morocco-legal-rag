@@ -2,7 +2,7 @@
 
 Assistant de recherche juridique multilingue pour des documents publics marocains.
 
-Le système permettra de poser une question en français, arabe ou darija et d'obtenir une réponse fondée sur les documents indexés, avec les sources citées. Il ne remplace pas un professionnel du droit.
+Le système permet de poser une question en français, arabe ou darija et d'obtenir une réponse fondée sur les documents indexés, avec les sources citées. Il ne remplace pas un professionnel du droit.
 
 ## Objectifs
 
@@ -13,9 +13,23 @@ Le système permettra de poser une question en français, arabe ou darija et d'o
 - évaluation de la récupération et de la fidélité des réponses ;
 - API et interface de démonstration.
 
-## Stack prévue
+## Stack
 
-Python, FastAPI, Qdrant ou Chroma, modèles multilingues Hugging Face, PostgreSQL, Streamlit et Docker.
+Python, FastAPI, Gradio, embeddings multilingues Hugging Face, BM25, fusion RRF, Docker et Qdrant comme stockage vectoriel prévu.
+
+## Ce qui fonctionne déjà
+
+- catalogue auditable de sources officielles ;
+- téléchargement limité à une liste de domaines autorisés ;
+- extraction PDF page par page avec hash SHA-256 ;
+- détection des pages nécessitant un OCR ;
+- chunking conservant la provenance ;
+- recherche hybride dense + BM25 avec fusion RRF ;
+- génération extractive sûre et adaptateur LLM compatible OpenAI ;
+- citations contenant le document, la page, l'extrait et l'URL ;
+- API FastAPI et interface Gradio ;
+- métriques Recall@K, MRR et nDCG ;
+- tests, Docker et intégration continue.
 
 ## Parcours notebook-first
 
@@ -36,17 +50,44 @@ Les notebooks sont générés de façon reproductible par `tools/build_notebooks
 
 ## Démarrage
 
-```bash
+```powershell
 python -m venv .venv
-.venv/Scripts/activate
-pip install -e .
+.venv\Scripts\Activate.ps1
+pip install -e ".[dev,ml,notebooks,ocr,ui]"
 python tools/build_notebooks.py
 jupyter lab
 ```
 
+Pour lancer seulement l'API avec les dépendances minimales :
+
+```powershell
+pip install -e ".[dev]"
+uvicorn morocco_legal_rag.api:app --reload
+```
+
+L'API expose :
+
+- `GET /health` ;
+- `POST /ask` ;
+- documentation interactive sur `http://localhost:8000/docs`.
+- interface web sur `http://localhost:8000/`.
+
+Pour télécharger uniquement les entrées approuvées du catalogue :
+
+```powershell
+python scripts/download_official_sources.py
+python scripts/ingest_downloaded_pdfs.py
+```
+
+Pour lancer l'interface après l'API :
+
+```powershell
+morocco-legal-ui
+```
+
 ## Statut
 
-Structure notebook-first initialisée. La prochaine étape est d'ajouter exclusivement des sources juridiques officielles ou clairement identifiées.
+MVP local en cours de validation. Les fichiers bruts, indexes et résultats d'OCR restent exclus de Git.
 
 ## Avertissement
 
