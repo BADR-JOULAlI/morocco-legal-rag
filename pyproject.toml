@@ -1,0 +1,32 @@
+[project]
+name = "morocco-legal-rag"
+version = "0.1.0"
+description = "Multilingual retrieval-augmented generation for public Moroccan legal documents"
+requires-python = ">=3.11"
+dependencies = [
+  "beautifulsoup4>=4.12",
+  "chromadb>=0.5",
+  "gradio>=5.0",
+  "jupyterlab>=4.2",
+  "matplotlib>=3.9",
+  "numpy>=2.0",
+  "pandas>=2.2",
+  "pymupdf>=1.24",
+  "pyyaml>=6.0",
+  "rank-bm25>=0.2.2",
+  "requests>=2.32",
+  "scikit-learn>=1.5",
+  "sentence-transformers>=3.0",
+  "torch>=2.3",
+  "transformers>=4.44",
+]
+
+[project.optional-dependencies]
+ocr = ["pytesseract>=0.3.13", "pillow>=10.4"]
+dev = ["pytest>=8.3", "ruff>=0.6", "nbqa>=1.9"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

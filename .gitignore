@@ -1,0 +1,10 @@
+__pycache__/
+.venv/
+.env
+.env.*
+data/raw/
+data/processed/
+data/index/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
